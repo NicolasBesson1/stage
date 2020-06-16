@@ -11,6 +11,15 @@ S2.add(y<=23)
 S2.add(x>17)
 print(S2.check())
 '''
+#Input: Array of strings T
+#Output: string resulting of the concatanation of every string in T
+def concat(T):
+        result = ""
+        for i in T:
+                result+=i
+        return result
+
+
 #Global constants
 N,M=7,14
 def polyedre(n=3,m=3):
