@@ -29,7 +29,7 @@ def polyedre(n=3,m=3):
                 X=[Int("x"+str(i)) for i in range(n)]
                 #B correspond aux membres de droite de chaque inegalite
                 B=[randint(-10,10) for i in range(m)]
-
+                polyedre=[]
                 print(A)
                 print(B)
 
@@ -43,10 +43,11 @@ def polyedre(n=3,m=3):
                         #On ajoute a S l'inegalite:
                         # sum(A[i][j]*X[j]) <= B[i]
                         S.add(sum(termes)<=B[i])
+                        polyedre.append(sum(termes)<=B[i])
                 print(S.check()==sat)
                 satisfaisable=S.check()==sat
         print(S.check())
-        return S
+        return polyedre
 
 print(polyedre())
 
