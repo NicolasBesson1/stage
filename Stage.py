@@ -1,5 +1,3 @@
-from z3 import *
-import islpy as isl
 
 '''
 #Test ISL
@@ -24,7 +22,7 @@ print("union: %s" % union)
 
 from z3 import *
 from random import randint
-
+from islpy import *
 
 '''
 #Test de z3
