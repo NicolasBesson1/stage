@@ -11,7 +11,8 @@ S2.add(y<=23)
 S2.add(x>17)
 print(S2.check())
 '''
-
+#Global constants
+N,M=7,14
 def polyedre(n=3,m=3):
         satisfaisable=False
 
@@ -48,9 +49,18 @@ def polyedre(n=3,m=3):
                 satisfaisable=S.check()==sat
         print(S.check())
         return polyedre
+poly=polyedre(n=N,m=M)
 
-print(polyedre())
+def formula_to_set(formula):
+        #Assuming the variables in "formula" have the format x0,x1, ... xN
+        print(formula)
+        
+        arguments = concat( [concat(["x",str(i),","]) for i in range(N-1) ]) + str("x") + str(N-1)
 
+        print(arguments)
+        return BasicSet( "{ ["+arguments+"] : " + str(formula) + "}" )
+
+print(formula_to_set(poly[0]))
 
 '''
 #Test ISL
