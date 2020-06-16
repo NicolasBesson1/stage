@@ -21,7 +21,10 @@ def concat(T):
 
 
 #Global constants
+#N is the number of variables
+#M is the number of inequalities
 N,M=7,14
+#Output: an array with random inequalities (a random polyhedron)
 def polyedre(n=3,m=3):
         satisfaisable=False
 
@@ -59,7 +62,8 @@ def polyedre(n=3,m=3):
         print(S.check())
         return polyedre
 poly=polyedre(n=N,m=M)
-
+#Input: Presburger formula in Z3
+#Output: an ISL set determined by this formula
 def formula_to_set(formula):
         #Assuming the variables in "formula" have the format x0,x1, ... xN
         print(formula)
