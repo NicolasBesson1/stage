@@ -78,7 +78,7 @@ print("union: %s" % union)
 
 '''
 
-'''L'objective de toutes les fonctions qui suivent c'est de
+'''L'objectif de toutes les fonctions qui suivent c'est de
 generer un polyedre en Z3 avec la fonction precedente, transformer chaque formule
 definissant le polyedre en un ensemble ISL, et calculer leur intersection.
 Ensuite, nous allons prendre la formule definissant l'ensemble obtenu,
