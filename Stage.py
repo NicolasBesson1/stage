@@ -13,10 +13,10 @@ S2.add(y<=23)
 S2.add(x>17)
 print(S2.check())
 '''
-N=7
-M=12
+N=2
+M=2
 #Renvoit une liste d'inegalites en Z3 correspondant a un polyedre convexe
-def polyedre(n=3,m=3):
+def polyedre(n=N,m=M):
         satisfaisable=False
 
         # Tant que l'ensemble n'est pas satisfaisable
@@ -74,9 +74,10 @@ bsets_in_union = []
 bset.union(bset2).convex_hull().foreach_basic_set(bsets_in_union.append)
 print(bsets_in_union)
 union, = bsets_in_union
-print("union: %s" % union) 
+print("union: %s" % union)
 
 '''
+
 
 '''L'objectif de toutes les fonctions qui suivent c'est de
 generer un polyedre en Z3 avec la fonction precedente, transformer chaque formule
@@ -139,7 +140,7 @@ def add_to_formula(formula, operator, term):
         if(operator==">="):
                 formula=formula>=term
                 return formula
-        if(operator=="=="):
+        if(operator=="="):
                 formula=formula==term
                 return formula
         if(operator=="<"):
@@ -175,7 +176,7 @@ def split_variable(t):
                 else:
                         factor+=i
         if(factor==""):
-                return 0,Int(variable)
+                return 1,Int(variable)
         return int(factor),Int(variable)
 
 #Input: an ISL basic set
@@ -186,11 +187,12 @@ def set_to_formula(bset):
         arr=context.split(" ")
         operator=""
         comparator=""
+        left=0
         for i in arr:
                 
                 if is_comparator(i):
                         comparator=i
-                        left=result
+                        left+=result
                         result=0
                 elif is_operator(i):
                         operator=i  
@@ -211,12 +213,38 @@ def set_to_formula(bset):
                         
 #Input: n the number of variables of the polyhedron, m the number of inequalities defining the polyhedron
 #Output: The intersection of the m sets created with polyedre()
-def isl_polyhedron(n=7,m=14):
-        poly=polyedre(n,m)
+def isl_polyhedron(poly):
         isl_poly=formula_to_set(poly[0])
         for i in poly:
                 isl_poly.intersect(formula_to_set(i))
         return isl_poly
 
-print(isl_polyhedron())
+
+#Input: An array T containing inequalities
+#Output: the conjunction of every inequality
+def conjunction(T):
+        result=True
+        for i in T:
+                result=And(result,i)
+        return result
+
+
+#The function creates randomly a polyhedron, turns it into an ISL set isl_poly, then compares the context of isl_poly
+#and the conjunction of every inequality created in the begining.
+def test_isl_intersection(n=N,m=M):
+        poly=polyedre(n,m)
+        isl_poly=isl_polyhedron(poly)
+        S=Solver()
+        A=conjunction(poly)
+        print(isl_poly)
+        B=set_to_formula(isl_poly)
+        print(A)
+        print(B)
+        if(B!=None):
+                S.add(Xor(A,B))
+        return S.check()==unsat
+        
+        
+for i in range(10):
+        print(test_isl_intersection())
 
