@@ -1,6 +1,5 @@
 
 
-
 from z3 import *
 from random import randint
 from islpy import *
@@ -16,6 +15,7 @@ print(S2.check())
 '''
 N=7
 M=12
+#Renvoit une liste d'inegalites en Z3 correspondant a un polyedre convexe
 def polyedre(n=3,m=3):
         satisfaisable=False
 
@@ -78,6 +78,8 @@ print("union: %s" % union)
 
 '''
 
+#Input: a list of strings
+#Output: a string corresponding to the concatanation of al the strings in the list
 def concat(T):
         result = ""
         for i in T:
@@ -88,7 +90,8 @@ def concat(T):
 #print(bset)
 
 
-
+#Input: a Z3 formula
+#Output: an ISL set defined by the formula
 def formula_to_set(formula):
         #Assuming the variables in "formula" have the format x0,x1, ... xN
         arguments = concat( [concat(["x",str(i),","]) for i in range(N-1) ]) + str("x") + str(N-1)
@@ -136,7 +139,7 @@ def add_to_formula(formula, operator, term):
         if(operator==">"):
                 return formula>term
 
-#True if a string is a comparator
+#TRue if o is a comparator
 def is_comparator(o):
         return o==">=" or o=="<" or o=="<=" or o==">"
 
@@ -167,14 +170,14 @@ def split_variable(t):
                 return 0,Int(variable)
         return int(factor),Int(variable)
 
-
+#Input: an ISL basic set
+#Output: the Z3 formula that defines the set (the context)
 def set_to_formula(bset):
         result=0
         context=get_string_context(bset)
         arr=context.split(" ")
         operator=""
         comparator=""
-        print(arr)
         for i in arr:
                 
                 if is_comparator(i):
@@ -198,10 +201,10 @@ def set_to_formula(bset):
         return add_to_formula(left,comparator,result)
 
                         
-
+#Input: n the number of variables of the polyhedron, m the number of inequalities defining the polyhedron
+#Output: The intersection of the m sets created with polyedre()
 def isl_polyhedron(n=7,m=14):
         poly=polyedre(n,m)
-        print(poly)
         isl_poly=formula_to_set(poly[0])
         for i in poly:
                 isl_poly.intersect(formula_to_set(i))
