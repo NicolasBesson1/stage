@@ -74,8 +74,13 @@ bsets_in_union = []
 bset.union(bset2).convex_hull().foreach_basic_set(bsets_in_union.append)
 print(bsets_in_union)
 union, = bsets_in_union
-print("union: %s" % union)
+print("union: %s" % union) 
 
+'''
+
+'''L'objective de toutes les fonctions qui suivent c'est de
+generer un polyedre en Z3 avec la fonction precedente, transformer chaque formule
+definissant le polyedre en un ensemble ISL, et calculer leur intersection.
 '''
 
 #Input: a list of strings
