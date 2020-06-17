@@ -1,3 +1,6 @@
+
+
+
 from z3 import *
 from random import randint
 from islpy import *
@@ -11,20 +14,8 @@ S2.add(y<=23)
 S2.add(x>17)
 print(S2.check())
 '''
-#Input: Array of strings T
-#Output: string resulting of the concatanation of every string in T
-def concat(T):
-        result = ""
-        for i in T:
-                result+=i
-        return result
-
-
-#Global constants
-#N is the number of variables
-#M is the number of inequalities
-N,M=7,14
-#Output: an array with random inequalities (a random polyhedron)
+N=7
+M=12
 def polyedre(n=3,m=3):
         satisfaisable=False
 
@@ -43,8 +34,7 @@ def polyedre(n=3,m=3):
                 #B correspond aux membres de droite de chaque inegalite
                 B=[randint(-10,10) for i in range(m)]
                 polyedre=[]
-                print(A)
-                print(B)
+                
 
                 for i in range(len(A)):
                         #Termes contient le membre de gauche de l'inegalite:
@@ -57,36 +47,27 @@ def polyedre(n=3,m=3):
                         # sum(A[i][j]*X[j]) <= B[i]
                         S.add(sum(termes)<=B[i])
                         polyedre.append(sum(termes)<=B[i])
-                print(S.check()==sat)
+                #print(S.check()==sat)
                 satisfaisable=S.check()==sat
-        print(S.check())
+        #print(S.check())
         return polyedre
+
 poly=polyedre(n=N,m=M)
-#Input: Presburger formula in Z3
-#Output: an ISL set determined by this formula
-def formula_to_set(formula):
-        #Assuming the variables in "formula" have the format x0,x1, ... xN
-        print(formula)
-        
-        arguments = concat( [concat(["x",str(i),","]) for i in range(N-1) ]) + str("x") + str(N-1)
 
-        print(arguments)
-        return BasicSet( "{ ["+arguments+"] : " + str(formula) + "}" )
 
-print(formula_to_set(poly[0]))
 
-'''
 #Test ISL
-space = isl.Space.create_from_names(isl.DEFAULT_CONTEXT, set=["x", "y"])
+'''
+space = Space.create_from_names(DEFAULT_CONTEXT, set=["x", "y"])
 
-bset = (isl.BasicSet.universe(space)
-        .add_constraint(isl.Constraint.ineq_from_names(space, {1: -1, "x": 1}))
-        .add_constraint(isl.Constraint.ineq_from_names(space, {1: 5, "x": -1}))
-        .add_constraint(isl.Constraint.ineq_from_names(space, {1: -1, "y": 1}))
-        .add_constraint(isl.Constraint.ineq_from_names(space, {1: 5, "y": -1})))
+bset = (BasicSet.universe(space)
+        .add_constraint(Constraint.ineq_from_names(space, {1: -1, "x": 1}))
+        .add_constraint(Constraint.ineq_from_names(space, {1: 5, "x": -1}))
+        .add_constraint(Constraint.ineq_from_names(space, {1: -1, "y": 1}))
+        .add_constraint(Constraint.ineq_from_names(space, {1: 5, "y": -1})))
 print("set 1 %s:" % bset)
 
-bset2 = isl.BasicSet("{[x, y] : x >= 0 and x < 5 and y >= 0 and y < x+4 }")
+bset2 = BasicSet("{[x, y] : x >= 0 and x < 5 and y >= 0 and y < x+4 }")
 print("set 2: %s" % bset2)
 
 bsets_in_union = []
@@ -94,4 +75,137 @@ bset.union(bset2).convex_hull().foreach_basic_set(bsets_in_union.append)
 print(bsets_in_union)
 union, = bsets_in_union
 print("union: %s" % union)
+
 '''
+
+def concat(T):
+        result = ""
+        for i in T:
+                result+=i
+        return result
+
+#bset=BasicSet("{[x0,x1,x2,x3] : " + str(poly[0]) + "}")
+#print(bset)
+
+
+
+def formula_to_set(formula):
+        #Assuming the variables in "formula" have the format x0,x1, ... xN
+        arguments = concat( [concat(["x",str(i),","]) for i in range(N-1) ]) + str("x") + str(N-1)
+        return BasicSet( "{ ["+arguments+"] : " + str(formula) + "}" )
+
+
+#Input: basic set
+#Output: context of the set in string format
+def get_string_context(bset):
+        strbset = str(bset)
+        result=""
+        copy=False
+        #What's between ":" and "}" (i.e. the context) will be stored in "result"
+        for i in strbset:
+                if(i=="}"):
+                        copy=False
+                if(copy):
+                        result+=i
+                if(i==":"):
+                        copy=True
+        return result
+
+#Returns the operation: formula operator term
+def add_to_formula(formula, operator, term):
+        if(operator=="+"):
+                formula = formula + term
+                return formula 
+        if(operator=="-"):
+                formula-=term
+                return formula
+        if(operator=="*"):
+                formula*=term
+                return formula
+        if(operator=="<="):
+                formula = formula<=term
+                return formula
+        if(operator==">="):
+                formula=formula>=term
+                return formula
+        if(operator=="=="):
+                formula=formula==term
+                return formula
+        if(operator=="<"):
+                return formula<term
+        if(operator==">"):
+                return formula>term
+
+#True if a string is a comparator
+def is_comparator(o):
+        return o==">=" or o=="<" or o=="<=" or o==">"
+
+
+#True if a string is an operator
+def is_operator(o):
+        return o=="+" or o=="-"
+
+#True if a string contains the name of a variable
+def contains_variable(t):
+        return "x" in t
+
+
+#Input: a string nxi, with n an and i integers
+#Output: the tubple int(n),Int(xi)
+def split_variable(t):
+        factor=""
+        variable=""
+        xfound=False
+        for i in t:
+                if i=="x":
+                        xfound=True
+                if xfound:
+                        variable+=i
+                else:
+                        factor+=i
+        if(factor==""):
+                return 0,Int(variable)
+        return int(factor),Int(variable)
+
+
+def set_to_formula(bset):
+        result=0
+        context=get_string_context(bset)
+        arr=context.split(" ")
+        operator=""
+        comparator=""
+        print(arr)
+        for i in arr:
+                
+                if is_comparator(i):
+                        comparator=i
+                        left=result
+                        result=0
+                elif is_operator(i):
+                        operator=i  
+                elif contains_variable(i):
+                        a,b=split_variable(i)
+                        if operator!="":
+                                result=add_to_formula(result,operator,a*b)
+                        else:
+                                result=a*b
+                elif len(i)!=0:
+                        if operator!="":
+                                result=add_to_formula(result,operator,Int(i))
+                        else:
+                                result=int(i)
+                
+        return add_to_formula(left,comparator,result)
+
+                        
+
+def isl_polyhedron(n=7,m=14):
+        poly=polyedre(n,m)
+        print(poly)
+        isl_poly=formula_to_set(poly[0])
+        for i in poly:
+                isl_poly.intersect(formula_to_set(i))
+        return isl_poly
+
+print(isl_polyhedron())
+
