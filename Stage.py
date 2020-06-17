@@ -81,6 +81,9 @@ print("union: %s" % union)
 '''L'objective de toutes les fonctions qui suivent c'est de
 generer un polyedre en Z3 avec la fonction precedente, transformer chaque formule
 definissant le polyedre en un ensemble ISL, et calculer leur intersection.
+Ensuite, nous allons prendre la formule definissant l'ensemble obtenu,
+pour voir si elle est equivalente a la conjonction de toutes les formules Z3 generees
+originalement
 '''
 
 #Input: a list of strings
