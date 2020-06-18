@@ -13,8 +13,8 @@ S2.add(y<=23)
 S2.add(x>17)
 print(S2.check())
 '''
-N=2
-M=2
+N=7
+M=14
 #Renvoit une liste d'inegalites en Z3 correspondant a un polyedre convexe
 def polyedre(n=N,m=M):
         satisfaisable=False
@@ -175,6 +175,8 @@ def split_variable(t):
                         variable+=i
                 else:
                         factor+=i
+        if(factor =="-"):
+                return -1, Int(variable)
         if(factor==""):
                 return 1,Int(variable)
         return int(factor),Int(variable)
@@ -238,13 +240,27 @@ def test_isl_intersection(n=N,m=M):
         A=conjunction(poly)
         print(isl_poly)
         B=set_to_formula(isl_poly)
-        print(A)
-        print(B)
         if(B!=None):
-                S.add(Xor(A,B))
+                S.add(Not(Implies(A,B)))
         return S.check()==unsat
         
-        
+'''
+S=Solver()
+#-6x0+3x1<=1 and 2*x0+7x1<=1
+A=And(-6*Int("x0")+3*Int("x1")<=1, 2*Int("x0")+7*Int("x1")<=1)
+#x1>-2x0
+B=Int("x1")<=2*Int("x0")
+S.add(Not(Implies(A,B)))
+
+print(S.check())
+m=S.model()
+
+
+for d in m.decls():
+    print ("%s = %s" % (d.name(), m[d]))
+'''
 for i in range(10):
         print(test_isl_intersection())
+
+
 
