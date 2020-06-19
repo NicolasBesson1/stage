@@ -13,8 +13,8 @@ S2.add(y<=23)
 S2.add(x>17)
 print(S2.check())
 '''
-N=7
-M=14
+N=2
+M=2
 #Renvoit une liste d'inegalites en Z3 correspondant a un polyedre convexe
 def polyedre(n=N,m=M):
         satisfaisable=False
@@ -43,13 +43,18 @@ def polyedre(n=N,m=M):
                         for j in range(len(X)):
                                 termes+=[A[i][j]*X[j]]
 
+
                         #On ajoute a S l'inegalite:
                         # sum(A[i][j]*X[j]) <= B[i]
                         S.add(sum(termes)<=B[i])
                         polyedre.append(sum(termes)<=B[i])
                 #print(S.check()==sat)
+                for x in X:
+                        S.add(x>=0)
+                        polyedre.append(x>=0)
                 satisfaisable=S.check()==sat
         #print(S.check())
+
         return polyedre
 
 poly=polyedre(n=N,m=M)
@@ -231,18 +236,24 @@ def conjunction(T):
         return result
 
 
-#The function creates randomly a polyhedron, turns it into an ISL set isl_poly, then compares the context of isl_poly
+#The function creates a random polyhedron, turns it into an ISL set isl_poly, then compares the context of isl_poly
 #and the conjunction of every inequality created in the begining.
 def test_isl_intersection(n=N,m=M):
         poly=polyedre(n,m)
         isl_poly=isl_polyhedron(poly)
         S=Solver()
         A=conjunction(poly)
-        print(isl_poly)
+        #print(isl_poly)
         B=set_to_formula(isl_poly)
+        print(A," ||| " ,B)
         if(B!=None):
-                S.add(Not(Implies(A,B)))
-        return S.check()==unsat
+                S.add(Xor(A,B))
+                #S.add(Not(Implies(B,A)))
+       
+        result=S.check()
+        m=S.model()
+        print(m)
+        return result==unsat
         
 '''
 S=Solver()
@@ -259,8 +270,34 @@ m=S.model()
 for d in m.decls():
     print ("%s = %s" % (d.name(), m[d]))
 '''
+
 for i in range(10):
         print(test_isl_intersection())
 
+x=Int("x")
+y=Int("y")
+A=Or(Not(And((x+3==y),(y>5))),(x>1))
+
+'''Methode de cooper:
+-formule=Tactic("nnf")(formule).as_expr()
+-simplify(formule,eq2ineq)
+
+A=Tactic("nnf")(A).as_expr()
+
+
+substitute(A,(x,Int("z")+1))
+
+print(A)
+
+a=Int("a")
+b=Int("b")
+
+
+print(A)
+
+help_simplify()
+lol=BasicSet("{ [x] : x=1}")
+
+'''
 
 
