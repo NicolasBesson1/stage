@@ -13,8 +13,9 @@ S2.add(y<=23)
 S2.add(x>17)
 print(S2.check())
 '''
-N=2
-M=2
+N=5
+M=7
+i=0
 #Renvoit une liste d'inegalites en Z3 correspondant a un polyedre convexe
 def polyedre(n=N,m=M):
         satisfaisable=False
@@ -49,9 +50,9 @@ def polyedre(n=N,m=M):
                         S.add(sum(termes)<=B[i])
                         polyedre.append(sum(termes)<=B[i])
                 #print(S.check()==sat)
-                for x in X:
+                '''for x in X:
                         S.add(x>=0)
-                        polyedre.append(x>=0)
+                        polyedre.append(x>=0)'''
                 satisfaisable=S.check()==sat
         #print(S.check())
 
@@ -109,8 +110,60 @@ def concat(T):
 def formula_to_set(formula):
         #Assuming the variables in "formula" have the format x0,x1, ... xN
         arguments = concat( [concat(["x",str(i),","]) for i in range(N-1) ]) + str("x") + str(N-1)
-        return BasicSet( "{ ["+arguments+"] : " + str(formula) + "}" )
+        return Set("{ ["+arguments+"] : " + str(formula) + "}" )
 
+
+#Input: basic set
+#Output: context of the set in string format
+def get_string_context(bset):
+        strbset = str(bset)
+        result=""
+        copy=False
+        #What's between ":" and "}" (i.e. the context) will be stored in "result"
+        for i in strbset:
+                if(i=="}"):
+                        copy=False
+                if(copy):
+                        result+=i
+                if(i==":"):
+                        copy=True
+        return result
+
+
+                        
+#Input: n the number of variables of the polyhedron, m the number of inequalities defining the polyhedron
+#Output: The intersection of the m sets created with polyedre()
+def isl_polyhedron(poly):
+        isl_poly=formula_to_set(poly[0])
+        for i in poly:
+                isl_poly=isl_poly.intersect(formula_to_set(i))
+        return isl_poly
+
+
+#Input: An array T containing inequalities
+#Output: the conjunction of every inequality
+def conjunction(T):
+        result=True
+        for i in T:
+                result=And(result,i)
+        return result
+
+
+def remove_spaces(arr):
+        i=0
+        while i < len(arr):
+                if arr[i]=="" or arr[i]==" ":
+                        arr.pop(i)
+                i+=1
+        return arr
+
+
+
+
+
+'''
+PRINCIPIO
+'''
 
 #Input: basic set
 #Output: context of the set in string format
@@ -152,20 +205,39 @@ def add_to_formula(formula, operator, term):
                 return formula<term
         if(operator==">"):
                 return formula>term
+        if(operator=="and"):
+                return And(formula,term)
+        if(operator=="or"):
+                return Or(formula,term)
 
 #TRue if o is a comparator
 def is_comparator(o):
-        return o==">=" or o=="<" or o=="<=" or o==">"
+        return o==">=" or o=="<" or o=="<=" or o==">" or o=="="
 
 
 #True if a string is an operator
 def is_operator(o):
-        return o=="+" or o=="-"
+        return o=="+" or o=="-" or o=='*'
+
+#True if a string is a logical operator
+
+def is_logical_operator(o):
+        return o=="and" or o=="or"
 
 #True if a string contains the name of a variable
 def contains_variable(t):
         return "x" in t
 
+def is_int(e):
+    k=0
+    if(e[0]!='-' and not(ord('0') < ord(e[0]) and ord(e[0]) < ord('9'))):
+            return False
+    for i in range(1,len(e)):
+
+        if(not(ord('0') < ord(e[i]) and ord(e[i]) < ord('9'))):
+                return False
+        k+=1
+    return True
 
 #Input: a string nxi, with n an and i integers
 #Output: the tubple int(n),Int(xi)
@@ -185,56 +257,112 @@ def split_variable(t):
         if(factor==""):
                 return 1,Int(variable)
         return int(factor),Int(variable)
+'''
+lexpr -> lexpr lop lexpr
+lexpr -> expr cop sexpr
+sexpr -> expr cop sexpr
+sexpr -> expr
+expr -> expr op expr
+expr -> INT | VAR
+lop -> AND | OR
+cop -> > | >= | < | <= | =
+op -> + | - | *
+'''
 
-#Input: an ISL basic set
-#Output: the Z3 formula that defines the set (the context)
+
+
+def analyse_syntaxique(formule):
+    global i
+    i=0
+    return lexpr(formule)
+
+def lexpr(formule):
+        
+        expr1=expr(formule)
+        c=cop(formule)
+        expr2=expr(formule)
+        lexpr1=add_to_formula(expr1,c,expr2)
+
+        while(i<len(formule) and is_comparator(formule[i])):
+                c=cop(formule)
+                expr1=expr2
+                expr2=expr(formule)
+                lexpr1=add_to_formula(lexpr1,"and",add_to_formula(expr1,c,expr2))
+
+        if(i!=len(formule)):
+                l=lop(formule)
+                lexpr2=lexpr(formule)
+                return add_to_formula(lexpr1,l,lexpr2)
+        return lexpr1
+
+def sexpr(formule):
+        global i
+        expr1=expr(formule)
+        return expr1
+
+def expr(formule):
+        global i
+        
+        if(contains_variable(formule[i])):
+                a,b=split_variable(formule[i])
+                expr1=a*b
+        else:
+                expr1=int(formule[i])
+        i+=1
+        while(i<len(formule) and is_operator(formule[i])):
+                o=op(formule)
+                if(contains_variable(formule[i])):
+                        a,b=split_variable(formule[i])
+                        expr2=a*b
+                else:
+                        expr2=int(formule[i])
+                i+=1
+                expr1=add_to_formula(expr1,o,expr2)
+        return expr1
+
+        
+
+def lop(formule):
+    global i
+    if(i >= len(formule) and not(is_logical_operator(formule[i]))):
+        
+        print("Erreur syntaxique")
+        print(formule)
+        print("Index : " + str(i))
+        print("Valeur : " + formule[i])
+        print("operateur logique attendu")
+        quit()
+    else:
+        i+=1
+        return formule[i-1]
+
+def op(formule):
+    global i
+    i+=1
+    return formule[i-1]
+
+def cop(formule):
+    global i
+    if(i>=len(formule) or not(is_comparator(formule[i]))):
+        print("Erreur syntaxique")
+        print(formule)
+        print("Index : " + str(i))
+        print("Valeur : " + formule[i])
+        print("comparateur attendu")
+        quit()
+    i+=1
+    return formule[i-1]
+
+'''
+FIN
+'''
+
 def set_to_formula(bset):
-        result=0
-        context=get_string_context(bset)
-        arr=context.split(" ")
-        operator=""
-        comparator=""
-        left=0
-        for i in arr:
-                
-                if is_comparator(i):
-                        comparator=i
-                        left+=result
-                        result=0
-                elif is_operator(i):
-                        operator=i  
-                elif contains_variable(i):
-                        a,b=split_variable(i)
-                        if operator!="":
-                                result=add_to_formula(result,operator,a*b)
-                        else:
-                                result=a*b
-                elif len(i)!=0:
-                        if operator!="":
-                                result=add_to_formula(result,operator,Int(i))
-                        else:
-                                result=int(i)
-                
-        return add_to_formula(left,comparator,result)
-
-                        
-#Input: n the number of variables of the polyhedron, m the number of inequalities defining the polyhedron
-#Output: The intersection of the m sets created with polyedre()
-def isl_polyhedron(poly):
-        isl_poly=formula_to_set(poly[0])
-        for i in poly:
-                isl_poly.intersect(formula_to_set(i))
-        return isl_poly
-
-
-#Input: An array T containing inequalities
-#Output: the conjunction of every inequality
-def conjunction(T):
-        result=True
-        for i in T:
-                result=And(result,i)
-        return result
-
+        formula=get_string_context(str(bset))
+        formula=formula.split(" ")
+        formula=remove_spaces(formula)
+        return analyse_syntaxique(formula)
+        
 
 #The function creates a random polyhedron, turns it into an ISL set isl_poly, then compares the context of isl_poly
 #and the conjunction of every inequality created in the begining.
@@ -245,14 +373,13 @@ def test_isl_intersection(n=N,m=M):
         A=conjunction(poly)
         #print(isl_poly)
         B=set_to_formula(isl_poly)
-        print(A," ||| " ,B)
+        print(A)
+        print(B)
         if(B!=None):
                 S.add(Xor(A,B))
                 #S.add(Not(Implies(B,A)))
        
         result=S.check()
-        m=S.model()
-        print(m)
         return result==unsat
         
 '''
