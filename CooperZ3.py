@@ -48,12 +48,12 @@ def step3(F,x):
                         return step3(children[0],x)
                 else:
                         return methode_cooper(children[0],x)
-        
+        #A finir
         
 
 def methode_cooper(F,x):
         #Step 1
-        result=Tactic("nnf")(F).as_expr()
+        result=step1(F)
         #Step 2
         result=step2(result)
 
