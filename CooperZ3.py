@@ -1,11 +1,9 @@
 from z3 import *
 x=Int('x')
 
-
-
-
-
 '''METHODE DE COOPER'''
+def step1(F):
+        return Tactic("nnf")(F).as_expr()
 
 def step2(F):
         children=F.children()
