@@ -26,7 +26,7 @@ def step2(F):
                                         B=grand_children[1]
                                         return A<B+1
 
-                return F.decl()(methode_cooper(F.children()[0]))
+                return F
         A=children[0]
         B=children[1]         
         if(str(F.decl())=="<="):
@@ -63,4 +63,4 @@ F=And(3*x+7<=18,Not(x==1))
 print(F.decl()(F.children()[0],F.children()[1]))
 
 
-print(methode_cooper(F))
+print(methode_cooper(F,x))
