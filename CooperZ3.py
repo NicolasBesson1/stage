@@ -37,7 +37,10 @@ def step2(F):
                 return Or(A<B,B<A)
         if(str(F.decl())=="=="):
                 return And(A<B+1,B<A+1)
-        return F.decl()(step2(children[0]),step2(children[1]))
+        for i in range(1,len(children)):
+                result=F.decl()(result,step2(children[i]))
+
+        return result
          
 def step3(F,x):
         children=F.children()
